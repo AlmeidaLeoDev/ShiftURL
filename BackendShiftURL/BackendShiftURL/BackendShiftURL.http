@@ -1,0 +1,6 @@
+@BackendShiftURL_HostAddress = http://localhost:5133
+
+GET {{BackendShiftURL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
