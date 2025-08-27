@@ -34,18 +34,17 @@
               "RelativeToolTip": "BackendShiftURL\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAOAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-08-19T01:53:06.231Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-19T01:53:06.231Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "BackendShiftURL",
+              "Title": "BackendShiftURL.csproj",
               "DocumentMoniker": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\BackendShiftURL.csproj",
               "RelativeDocumentMoniker": "BackendShiftURL\\BackendShiftURL.csproj",
-              "ToolTip": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\BackendShiftURL.csproj*",
-              "RelativeToolTip": "BackendShiftURL\\BackendShiftURL.csproj*",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAVAAAAAAAAAA==",
+              "ToolTip": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\BackendShiftURL.csproj",
+              "RelativeToolTip": "BackendShiftURL\\BackendShiftURL.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
               "WhenOpened": "2025-08-19T01:51:35.829Z",
               "EditorCaption": ""
