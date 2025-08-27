@@ -1,0 +1,128 @@
+# Workflow name shown in GitHub Actions
+name: CD - Backend Staging
+
+# Trigger the workflow when CI completes successfully
+on:
+  workflow_dispatch: # manual trigger
+  workflow_run:
+    workflows: ["CI - Backend ASP.NET Core"]
+    types: [completed]
+    branches: [develop]
+
+jobs:
+  cd-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      # Download backend artifact from the completed CI workflow
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: ./publish
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      # Verify artifact contents
+      - name: Verify artifact
+        run: |
+          echo "Verifying downloaded artifact..."
+          ls -la ./publish/
+          if [ ! -f ./publish/BackendShiftURL.dll ]; then
+            echo "Main DLL not found in artifact"
+            exit 1
+          fi
+          echo "Artifact verification completed"
+
+      # Setup .NET runtime to run published DLLs
+      - name: Setup .NET runtime
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Deploy to staging
+      - name: Deploy to Staging
+        env:
+          ASPNETCORE_ENVIRONMENT: Staging
+          ASPNETCORE_URLS: http://+:5000
+        run: |
+          echo "Starting ASP.NET Core app in staging mode"
+          # Start the app in background for testing
+          nohup dotnet ./publish/BackendShiftURL.dll > app.log 2>&1 &
+          echo $! > app.pid  # Save the PID to a file
+          sleep 15 # Wait for app to start
+          
+          APP_PID=$(cat app.pid)
+          if ps -p $APP_PID > /dev/null; then
+            echo "Application started successfully with PID: $APP_PID"
+          else
+            echo "Failed to start application"
+            cat app.log # Show logs if failed
+            exit 1
+          fi
+      
+      # Health Check
+      - name: Health Check
+        run: |
+          echo "Performing health check..."
+          for i in {1..30}; do
+            if curl -f -s http://localhost:5000/health > /dev/null 2>&1; then
+              echo "Health check passed (attempt $i)"
+              break
+            elif curl -f -s http://localhost:5000 > /dev/null 2>&1; then
+              echo "Basic connectivity check passed (attempt $i)"
+              break
+            fi
+            
+            if [ $i -eq 30 ]; then
+              echo "Health check failed after 30 attempts"
+              echo "Application logs:"
+              cat app.log || echo "No logs available"
+              exit 1
+            fi
+            
+            echo "Health check attempt $i failed, retrying in 2 seconds..."
+            sleep 2
+          done
+
+      # Smoke tests
+      - name: Smoke tests (placeholder)
+        run: |
+          echo "Placeholder: smoke tests will be added here later"
+
+      # Kill application
+      - name: Cleanup - Stop application
+        if: always()
+        run: |
+          echo "Stopping application..."
+          
+          # Stop using PID file first
+          if [ -f app.pid ]; then
+            APP_PID=$(cat app.pid)
+            if [ ! -z "$APP_PID" ] && ps -p $APP_PID > /dev/null; then
+              kill $APP_PID || true
+              sleep 5
+              # Force kill if still running
+              if ps -p $APP_PID > /dev/null; then
+                kill -9 $APP_PID || true
+              fi
+              echo "Application stopped (PID: $APP_PID)"
+            fi
+            rm -f app.pid
+          fi
+          
+          # Additional cleanup - kill any remaining dotnet processes
+          pkill -f "dotnet.*BackendShiftURL.dll" || true
+          
+          # Cleanup log files
+          rm -f app.log || true
+          
+          echo "Cleanup completed"
+
+      # Artifact validated
+      - name: Artifact validated
+        run: | 
+          echo "Artifact validated and ready for production deployment"

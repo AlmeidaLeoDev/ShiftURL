@@ -1,0 +1,71 @@
+# Workflow name shown in GitHub Actions
+name : CI - Backend ASP.NET Core
+
+# Trigger the workflow on push or pull request to develop or feature branches
+on:
+  push:
+    branches: [ "feature/*", "develop" ]
+  pull_request:
+    branches: [ "feature/*", "develop" ]
+  
+jobs:
+  ci-backend: # Job name
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    timeout-minutes: 15
+    
+    permissions: # Required for CodeQL
+      contents: read
+      security-events: write
+
+    steps:
+      # Download repo code to the runner
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup .NET environment
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x # Install .NET 8
+
+      # Cache NuGet packages
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      # Restores project dependencies
+      - name: Restore dependencies
+        run: dotnet restore ./BackendShiftURL/BackendShiftURL/BackendShiftURL.csproj
+
+      # Lint - Code formatting check
+      - name: Lint (dotnet format)
+        run: dotnet format ./BackendShiftURL/BackendShiftURL/BackendShiftURL.csproj  --verify-no-changes
+
+      # Initialize CodeQL 
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      # Builds the project in release mode
+      - name: Build
+        run: dotnet build ./BackendShiftURL/BackendShiftURL/BackendShiftURL.csproj --no-restore --configuration Release
+
+      # CodeQL Analysis
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # Publish: Compiles and packages the application into ./publish folder
+      - name: Publish app
+        run: dotnet publish ./BackendShiftURL/BackendShiftURL/BackendShiftURL.csproj  -c Release -o ./publish --no-restore
+
+      # Uploads the published app to GitHub Actions server as an artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifact
+          path: ./publish
