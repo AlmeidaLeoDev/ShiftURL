@@ -39,7 +39,7 @@ jobs:
 
       # Restores project dependencies
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ./BackendShiftURL/BackendShiftURL.sln
 
       # Code formatting check
       - name: Lint (dotnet format)
@@ -53,7 +53,7 @@ jobs:
 
       # Builds the project in release mode
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build ./BackendShiftURL/BackendShiftURL.sln --no-restore --configuration Release
 
       # CodeQL Analysis
       - name: Perform CodeQL Analysis
@@ -61,7 +61,7 @@ jobs:
 
       # Publish: Compiles and packages the application into ./publish folder
       - name: Publish app
-        run: dotnet publish -c Release -o ./publish --no-restore
+        run: dotnet publish ./BackendShiftURL/BackendShiftURL.sln  -c Release -o ./publish --no-restore
 
       # Uploads the published app to GitHub Actions server as an artifact
       - name: Upload artifact
