@@ -41,9 +41,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ./BackendShiftURL/BackendShiftURL.sln
 
-      # Code formatting check
+      # Lint - Code formatting check
       - name: Lint (dotnet format)
-        run: dotnet format --verify-no-changes
+        run: dotnet format ./BackendShiftURL/BackendShiftURL.sln  --verify-no-changes
 
       # Initialize CodeQL 
       - name: Initialize CodeQL
