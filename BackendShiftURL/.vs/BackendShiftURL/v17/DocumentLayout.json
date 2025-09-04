@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{84D16B52-A4B7-446C-B7CA-E7B717C9FCC6}|BackendShiftURL\\BackendShiftURL.csproj|c:\\users\\public\\myprojects\\shifturl\\backendshifturl\\backendshifturl\\backendshifturl.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{84D16B52-A4B7-446C-B7CA-E7B717C9FCC6}|BackendShiftURL\\BackendShiftURL.csproj|solutionrelative:backendshifturl\\backendshifturl.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{84D16B52-A4B7-446C-B7CA-E7B717C9FCC6}|BackendShiftURL\\BackendShiftURL.csproj|c:\\users\\public\\myprojects\\shifturl\\backendshifturl\\backendshifturl\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{84D16B52-A4B7-446C-B7CA-E7B717C9FCC6}|BackendShiftURL\\BackendShiftURL.csproj|solutionrelative:backendshifturl\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{84D16B52-A4B7-446C-B7CA-E7B717C9FCC6}|BackendShiftURL\\BackendShiftURL.csproj|c:\\users\\public\\myprojects\\shifturl\\backendshifturl\\backendshifturl\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -18,11 +18,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\Dockerfile",
+              "RelativeDocumentMoniker": "BackendShiftURL\\Dockerfile",
+              "ToolTip": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\Dockerfile",
+              "RelativeToolTip": "BackendShiftURL\\Dockerfile",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAowBEAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-09-01T14:40:14.738Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -35,19 +48,6 @@
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAOAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-19T01:53:06.231Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "BackendShiftURL.csproj",
-              "DocumentMoniker": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\BackendShiftURL.csproj",
-              "RelativeDocumentMoniker": "BackendShiftURL\\BackendShiftURL.csproj",
-              "ToolTip": "C:\\Users\\Public\\MyProjects\\ShiftURL\\BackendShiftURL\\BackendShiftURL\\BackendShiftURL.csproj",
-              "RelativeToolTip": "BackendShiftURL\\BackendShiftURL.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-08-19T01:51:35.829Z",
-              "EditorCaption": ""
             }
           ]
         }

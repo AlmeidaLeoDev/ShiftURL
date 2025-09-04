@@ -11,10 +11,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("2e8e9c6e-cb19-436b-bcf4-83a6ec5abb62")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("BackendShiftURL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+26fb0c7bc182f6d8ffff0382db451cbbb6b5fc0e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+57bcc9d167cbab34ac3464ff9c63e9f8b630e7be")]
 [assembly: System.Reflection.AssemblyProductAttribute("BackendShiftURL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BackendShiftURL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
