@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: . 
+      dockerfile: BackendShiftURL/BackendShiftURL/DockerfileBackend
+    container_name: backend-shifturl
+    ports:
+      - "8080:8080"  # HTTP
+      - "8081:8081"  # HTTPS (se necessário)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080;https://+:8081
+    networks:
+      - app-network
+
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
