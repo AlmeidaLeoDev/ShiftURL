@@ -15,62 +15,92 @@ jobs:
     timeout-minutes: 15
     if: github.event.workflow_run.conclusion == 'success'
 
+    permissions:
+      contents: read
+      packages: read
+
     steps:
-      # Download backend artifact from the completed CI workflow
-      - name: Download backend artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifact
-          path: ./publish
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
+      # Checkout code (needed for docker-compose.yml)
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Verify artifact contents
-      - name: Verify artifact
+      # Login to Github Container
+      - name: Login to Docker GitHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Get the commit SHA from the triggering workflow
+      - name: Get commit SHA
+        id: commit
         run: |
-          echo "Verifying downloaded artifact..."
-          ls -la ./publish/
-          if [ ! -f ./publish/BackendShiftURL.dll ]; then
-            echo "Main DLL not found in artifact"
-            exit 1
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
           fi
-          echo "Artifact verification completed"
 
-      # Setup .NET runtime to run published DLLs
-      - name: Setup .NET runtime
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+      # Pull the Docker image built in CI
+      - name: Pull Docker image
+        run: |
+          echo "Pulling Docker image for commit: ${{ steps.commit.outputs.sha }}"
+          docker pull itsleonardo/backend:${{ steps.commit.outputs.sha }}
+          
+          # Tag local staging
+          docker tag itsleonardo/backend:${{ steps.commit.outputs.sha }} backend-staging
 
-      # Deploy to staging
-      - name: Deploy to Staging
+      # Deploy using Docker Compose
+      - name: Deploy with Docker Compose
         env:
           ASPNETCORE_ENVIRONMENT: Staging
-          ASPNETCORE_URLS: http://+:5000
+          IMAGE_TAG: staging
         run: |
-          echo "Starting ASP.NET Core app in staging mode"
-          # Start the app in background for testing
-          nohup dotnet ./publish/BackendShiftURL.dll > app.log 2>&1 &
-          echo $! > app.pid  # Save the PID to a file
-          sleep 15 # Wait for app to start
+          echo "Starting application with Docker Compose..."
           
-          APP_PID=$(cat app.pid)
-          if ps -p $APP_PID > /dev/null; then
-            echo "Application started successfully with PID: $APP_PID"
-          else
-            echo "Failed to start application"
-            cat app.log # Show logs if failed
-            exit 1
-          fi
+          # Create a staging docker-compose override file
+          cat << EOF > docker-compose.staging.yml
+          version: '3.8'
+          services:
+            backend:
+              image: itsleonardo/backend:staging
+              environment:
+                - ASPNETCORE_ENVIRONMENT=Staging
+                - ASPNETCORE_URLS=http://+:5000
+              ports:
+                - "5000:5000"
+              healthcheck:
+                test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+                interval: 30s
+                timeout: 10s
+                retries: 3
+                start_period: 40s
+          EOF
+          
+          # Start the application
+          docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+          
+          # Wait for service to be ready
+          echo "Waiting for application to start..."
+          sleep 20
       
       # Health Check
       - name: Health Check
         run: |
-          echo "Performing health check..."
+          echo "Performing comprehensive health check..."
+          
+          # Check if container is running
+          if ! docker-compose ps | grep -q "Up"; then
+            echo "Container is not running!"
+            docker-compose logs
+            exit 1
+          fi
+          
+          # Perform HTTP health checks
           for i in {1..30}; do
             if curl -f -s http://localhost:5000/health > /dev/null 2>&1; then
               echo "Health check passed (attempt $i)"
+              echo "Application is healthy and ready!"
               break
             elif curl -f -s http://localhost:5000 > /dev/null 2>&1; then
               echo "Basic connectivity check passed (attempt $i)"
@@ -79,8 +109,8 @@ jobs:
             
             if [ $i -eq 30 ]; then
               echo "Health check failed after 30 attempts"
-              echo "Application logs:"
-              cat app.log || echo "No logs available"
+              echo "Container logs:"
+              docker-compose logs
               exit 1
             fi
             
@@ -93,36 +123,51 @@ jobs:
         run: |
           echo "Placeholder: smoke tests will be added here later"
 
-      # Kill application
+      # Container Resource Usage
+      - name: Check Resource Usage
+        run: |
+          echo "Checking container resource usage..."
+          docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}"
+
+      # Cleanup - Stop application
       - name: Cleanup - Stop application
         if: always()
         run: |
           echo "Stopping application..."
           
-          # Stop using PID file first
-          if [ -f app.pid ]; then
-            APP_PID=$(cat app.pid)
-            if [ ! -z "$APP_PID" ] && ps -p $APP_PID > /dev/null; then
-              kill $APP_PID || true
-              sleep 5
-              # Force kill if still running
-              if ps -p $APP_PID > /dev/null; then
-                kill -9 $APP_PID || true
-              fi
-              echo "Application stopped (PID: $APP_PID)"
-            fi
-            rm -f app.pid
-          fi
+          # Stop and remove containers
+          docker-compose -f docker-compose.yml -f docker-compose.staging.yml down -v
           
-          # Additional cleanup - kill any remaining dotnet processes
-          pkill -f "dotnet.*BackendShiftURL.dll" || true
+          # Remove the staging image
+          docker rmi itsleonardo/backend:staging || true
           
-          # Cleanup log files
-          rm -f app.log || true
+          # Clean up staging override file
+          rm -f docker-compose.staging.yml || true
           
           echo "Cleanup completed"
 
-      # Artifact validated
-      - name: Artifact validated
-        run: | 
-          echo "Artifact validated and ready for production deployment"
+      # Legacy fallback (simplified)
+      - name: Legacy Deployment Fallback
+        if: failure()
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+          path: ./publish
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Run Legacy App
+        if: failure()
+        run: |
+          nohup dotnet ./publish/BackendShiftURL.dll > app.log 2>&1 &
+          sleep 15
+          curl -f http://localhost:5000/health || exit 1
+          echo "✅ Legacy deployment successful"
+
+      # Deployment Success
+      - name: Deployment Success
+        run: |
+          echo "Staging deployment completed successfully!"
+          echo "Application is running in Docker containers"
+          echo "Ready for production deployment"
