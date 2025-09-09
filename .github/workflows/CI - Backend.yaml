@@ -84,7 +84,8 @@ jobs:
           push: true
           tags: |
             itsleonardo/backend:latest
-            itsleonardo/backend:staging  
+            itsleonardo/backend:staging
+            itsleonardo/backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -122,13 +123,6 @@ jobs:
           # Cleanup
           docker stop test-app
           docker rm test-app
-
-      # Uploads the published app to GitHub Actions server as an artifact
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-artifact
-          path: ./publish
 
       # Output image information
       - name: Image info

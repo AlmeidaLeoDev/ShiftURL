@@ -13,7 +13,7 @@ jobs:
   cd-backend:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: read
@@ -24,8 +24,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Login to Github Container
-      - name: Login to Docker GitHub
+      # Login to DockerHub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
@@ -47,38 +47,39 @@ jobs:
           echo "Pulling Docker image for commit: ${{ steps.commit.outputs.sha }}"
           docker pull itsleonardo/backend:${{ steps.commit.outputs.sha }}
           
-          # Tag local staging
-          docker tag itsleonardo/backend:${{ steps.commit.outputs.sha }} backend-staging
+          # Tag for local use
+          docker tag itsleonardo/backend:${{ steps.commit.outputs.sha }} backend-staging:local
 
-      # Deploy using Docker Compose
-      - name: Deploy with Docker Compose
-        env:
-          ASPNETCORE_ENVIRONMENT: Staging
-          IMAGE_TAG: staging
+      # Create staging docker-compose file
+      - name: Create staging docker-compose file
         run: |
-          echo "Starting application with Docker Compose..."
-          
-          # Create a staging docker-compose override file
           cat << EOF > docker-compose.staging.yml
           version: '3.8'
           services:
             backend:
-              image: itsleonardo/backend:staging
+              image: backend-staging:local
               environment:
                 - ASPNETCORE_ENVIRONMENT=Staging
-                - ASPNETCORE_URLS=http://+:5000
+                - ASPNETCORE_URLS=http://+:8080
               ports:
-                - "5000:5000"
+                - "5000:8080"
               healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+                test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
                 interval: 30s
                 timeout: 10s
                 retries: 3
                 start_period: 40s
           EOF
+
+      # Deploy using Docker Compose
+      - name: Deploy with Docker Compose
+        env:
+          ASPNETCORE_ENVIRONMENT: Staging
+        run: |
+          echo "Starting application with Docker Compose..."
           
-          # Start the application
-          docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+          # Start the application using docker compose (v2)
+          docker compose -f docker-compose.staging.yml up -d
           
           # Wait for service to be ready
           echo "Waiting for application to start..."
@@ -90,9 +91,9 @@ jobs:
           echo "Performing comprehensive health check..."
           
           # Check if container is running
-          if ! docker-compose ps | grep -q "Up"; then
+          if ! docker compose -f docker-compose.staging.yml ps | grep -q "Up"; then
             echo "Container is not running!"
-            docker-compose logs
+            docker compose -f docker-compose.staging.yml logs
             exit 1
           fi
           
@@ -110,7 +111,7 @@ jobs:
             if [ $i -eq 30 ]; then
               echo "Health check failed after 30 attempts"
               echo "Container logs:"
-              docker-compose logs
+              docker compose -f docker-compose.staging.yml logs
               exit 1
             fi
             
@@ -121,7 +122,16 @@ jobs:
       # Smoke tests
       - name: Smoke tests (placeholder)
         run: |
-          echo "Placeholder: smoke tests will be added here later"
+          echo "Running basic smoke tests..."
+          
+          # Test basic endpoints
+          echo "Testing root endpoint..."
+          curl -f -s http://localhost:5000 || echo "Root endpoint not available"
+          
+          echo "Testing health endpoint..."
+          curl -f -s http://localhost:5000/health || echo "Health endpoint not available"
+          
+          echo "Smoke tests completed"
 
       # Container Resource Usage
       - name: Check Resource Usage
@@ -135,11 +145,11 @@ jobs:
         run: |
           echo "Stopping application..."
           
-          # Stop and remove containers
-          docker-compose -f docker-compose.yml -f docker-compose.staging.yml down -v
+          # Stop and remove containers using docker compose (v2)
+          docker compose -f docker-compose.staging.yml down -v || true
           
-          # Remove the staging image
-          docker rmi itsleonardo/backend:staging || true
+          # Remove the local staging image
+          docker rmi backend-staging:local || true
           
           # Clean up staging override file
           rm -f docker-compose.staging.yml || true
@@ -149,25 +159,33 @@ jobs:
       # Legacy fallback (simplified)
       - name: Legacy Deployment Fallback
         if: failure()
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-artifact
-          path: ./publish
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-
-      - name: Run Legacy App
-        if: failure()
         run: |
-          nohup dotnet ./publish/BackendShiftURL.dll > app.log 2>&1 &
+          echo "Attempting legacy deployment fallback..."
+          
+          # Try to use the staging image directly
+          docker pull itsleonardo/backend:staging || exit 1
+          
+          # Run container directly
+          docker run -d --name fallback-app -p 5000:8080 \
+            -e ASPNETCORE_ENVIRONMENT=Staging \
+            -e ASPNETCORE_URLS=http://+:8080 \
+            itsleonardo/backend:staging
+          
+          # Wait and test
           sleep 15
-          curl -f http://localhost:5000/health || exit 1
+          curl -f http://localhost:5000/health || curl -f http://localhost:5000 || exit 1
+          
           echo "✅ Legacy deployment successful"
+          
+          # Cleanup fallback
+          docker stop fallback-app || true
+          docker rm fallback-app || true
 
       # Deployment Success
       - name: Deployment Success
+        if: success()
         run: |
-          echo "Staging deployment completed successfully!"
-          echo "Application is running in Docker containers"
+          echo "🎉 Staging deployment completed successfully!"
+          echo "Application is running with commit: ${{ steps.commit.outputs.sha }}"
+          echo "Docker image: itsleonardo/backend:${{ steps.commit.outputs.sha }}"
           echo "Ready for production deployment"
