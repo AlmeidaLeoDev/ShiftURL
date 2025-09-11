@@ -1,4 +1,4 @@
-﻿namespace BackendShiftURL.Models
+namespace BackendShiftURL.Models
 {
     public class User
     {
@@ -39,7 +39,7 @@
         // Queries
         public string EmailLower { get; set; } = string.Empty;
     }
-    
+
     public enum UserPlan
     {
         Free,

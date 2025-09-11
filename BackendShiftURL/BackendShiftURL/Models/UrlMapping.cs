@@ -1,4 +1,4 @@
-﻿namespace BackendShiftURL.Models
+namespace BackendShiftURL.Models
 {
     public class UrlMapping
     {

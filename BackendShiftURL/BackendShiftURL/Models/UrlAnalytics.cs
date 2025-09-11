@@ -1,6 +1,6 @@
-﻿namespace BackendShiftURL.Models
+namespace BackendShiftURL.Models
 {
-    public class UrlAnalytics 
+    public class UrlAnalytics
     {
         // Partition Key
         public required string ShortCode { get; set; }
