@@ -1,11 +1,9 @@
-namespace BackendShiftURL.Models
+namespace BackendShiftURL.Models.Domain
 {
     public class UrlAnalytics
     {
-        // Partition Key
         public required string ShortCode { get; set; }
 
-        // Sort Key implícita
         public required string AccessKey { get; set; }
 
         public required string AccessId { get; set; }
@@ -16,7 +14,6 @@ namespace BackendShiftURL.Models
         public required string Country { get; set; }
         public required string City { get; set; }
 
-        // Extra fields for analysis 
         public string? Device { get; set; }
         public string? Browser { get; set; }
         public string? OperatingSystem { get; set; }
