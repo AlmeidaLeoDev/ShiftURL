@@ -1,6 +1,9 @@
-﻿namespace BackendShiftURL.Models.Shared
+namespace BackendShiftURL.Models.Shared
 {
-    public class UserPlan
+    public enum UserPlan
     {
+        Free,
+        Premium,
+        Enterprise
     }
 }
