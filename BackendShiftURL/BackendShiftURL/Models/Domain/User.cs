@@ -1,3 +1,5 @@
+using BackendShiftURL.Models.Shared;
+
 namespace BackendShiftURL.Models.Domain
 {
     public class User
@@ -30,12 +32,5 @@ namespace BackendShiftURL.Models.Domain
         public int MonthlyUrlLimit { get; set; } = 100;
 
         public string EmailLower { get; set; } = string.Empty;
-    }
-
-    public enum UserPlan
-    {
-        Free,
-        Premium,
-        Enterprise
     }
 }

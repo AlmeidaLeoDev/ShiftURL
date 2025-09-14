@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2.DataModel;
+using BackendShiftURL.Models.Shared;
 
 namespace BackendShiftURL.Models.Persistence
 {
@@ -68,12 +69,5 @@ namespace BackendShiftURL.Models.Persistence
         [DynamoDBProperty("EmailLower")]
         [DynamoDBGlobalSecondaryIndexHashKey("Email-Index")]
         public string EmailLower { get; set; } = string.Empty;
-    }
-
-    public enum UserPlan
-    {
-        Free,
-        Premium,
-        Enterprise
     }
 }
