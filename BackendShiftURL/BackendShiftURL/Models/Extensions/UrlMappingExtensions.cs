@@ -50,5 +50,24 @@ namespace BackendShiftURL.Models.Extensions
         {
             return persistences.Select(p => p.ToDomain());
         }
+
+        public static bool IsExpired(this UrlMapping urlMapping)
+        {
+            if (!urlMapping.ExpiresAt.HasValue)
+                return false;
+
+            return urlMapping.ExpiresAt.Value < DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+
+        public static bool IsValid(this UrlMapping urlMapping)
+        {
+            return urlMapping.IsActive && !urlMapping.IsExpired();
+        }
+
+        public static void RegisterClick(this UrlMapping urlMapping)
+        {
+            urlMapping.ClickCount++;
+            urlMapping.LastAccessedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
     }
 }

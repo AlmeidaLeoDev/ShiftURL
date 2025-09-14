@@ -52,5 +52,56 @@ namespace BackendShiftURL.Models.Extensions
         {
             return persistences.Select(p => p.ToDomain());
         }
+
+        public static UrlAnalytics CreateNew(
+            string shortCode,
+            string accessId,
+            string ipAddress,
+            string userAgent,
+            string referrer,
+            string country,
+            string city)
+        {
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            return new UrlAnalytics
+            {
+                ShortCode = shortCode,
+                AccessKey = $"{shortCode}#{now}#{accessId}",
+                AccessId = accessId,
+                AccessedAt = now,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                Referrer = referrer,
+                Country = country,
+                City = city
+            };
+        }
+
+        public static DateTime GetAccessDateTime(this UrlAnalytics analytics)
+        {
+            return DateTimeOffset.FromUnixTimeSeconds(analytics.AccessedAt).DateTime;
+        }
+
+        public static bool IsToday(this UrlAnalytics analytics)
+        {
+            var accessDate = analytics.GetAccessDateTime().Date;
+            var today = DateTime.UtcNow.Date;
+            return accessDate == today;
+        }
+
+        public static bool IsThisWeek(this UrlAnalytics analytics)
+        {
+            var accessDate = analytics.GetAccessDateTime();
+            var startOfWeek = DateTime.UtcNow.AddDays(-(int)DateTime.UtcNow.DayOfWeek);
+            return accessDate >= startOfWeek;
+        }
+
+        public static bool IsThisMonth(this UrlAnalytics analytics)
+        {
+            var accessDate = analytics.GetAccessDateTime();
+            var now = DateTime.UtcNow;
+            return accessDate.Year == now.Year && accessDate.Month == now.Month;
+        }
     }
 }
