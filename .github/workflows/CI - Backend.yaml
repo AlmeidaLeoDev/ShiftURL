@@ -1,12 +1,12 @@
 # Workflow name shown in GitHub Actions
-name : CI - Backend ASP.NET Core
+name: CI - Backend ASP.NET Core
 
 # Trigger the workflow on push or pull request to develop or feature branches
 on:
   push:
-    branches: [ "feature/*", "develop" ]
+    branches: [ "feature/*", "develop", "main" ]  # CI runs for feature, develop and main
   pull_request:
-    branches: [ "feature/*", "develop" ]
+    branches: [ "develop", "main" ]  # CI runs on PRs for develop and main
   
 jobs:
   ci-backend:
@@ -68,15 +68,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Login
-      - name: Login to Docker GitHub
+      # Login (only push the image if it is pushed to main)
+      - name: Login to Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build and push Docker image
-      - name: Build and push
+      # Build and push Docker image (only push if it is main)
+      - name: Build and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -89,13 +91,32 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Build Docker image locally para teste (for all branches)
+      - name: Build Docker image for testing
+        if: github.event_name != 'push' || github.ref != 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./BackendShiftURL/BackendShiftURL/DockerfileBackend
+          push: false
+          tags: itsleonardo/backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       # Test Docker image locally
       - name: Test Docker image
         run: |
+          # Define qual tag usar baseado na branch
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            IMAGE_TAG="itsleonardo/backend:latest"
+          else
+            IMAGE_TAG="itsleonardo/backend:test"
+          fi
+          
           # Run the container in detached mode
           docker run -d --name test-app -p 5000:8080 \
             -e ASPNETCORE_ENVIRONMENT=Staging \
-            itsleonardo/backend:latest
+            $IMAGE_TAG
           
           # Wait for container to start
           sleep 15
@@ -124,8 +145,11 @@ jobs:
           docker stop test-app
           docker rm test-app
 
-      # Output image information
+      # Output image information (just pushed)
       - name: Image info
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "Docker image built and pushed:"
           echo "- itsleonardo/backend:latest"
+          echo "- itsleonardo/backend:staging" 
+          echo "- itsleonardo/backend:${{ github.sha }}"
