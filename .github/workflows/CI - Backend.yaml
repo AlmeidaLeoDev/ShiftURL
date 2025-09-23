@@ -4,9 +4,9 @@ name : CI - Backend ASP.NET Core
 # Trigger the workflow on push or pull request to develop or feature branches
 on:
   push:
-    branches: [ "feature/*", "develop" ]
+    branches: [ "feature/*", "develop", "main" ] 
   pull_request:
-    branches: [ "feature/*", "develop" ]
+    branches: [ "develop", "main" ]
   
 jobs:
   ci-backend:
