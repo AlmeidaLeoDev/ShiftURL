@@ -1,0 +1,34 @@
+# root = true indica que este é o arquivo principal de configuração
+# O editor para de procurar por outros .editorconfig em pastas superiores
+root = true
+
+# Todos os arquivos
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Arquivos C#
+[*.cs]
+# Quebras de linha
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Indentação
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Espaçamento
+csharp_space_after_keywords_in_control_flow_statements = true
+
+# Preferências básicas
+csharp_style_var_when_type_is_apparent = true
+dotnet_sort_system_directives_first = true
+
+# Arquivos JSON/XML
+[*.{json,xml,csproj}]
+indent_size = 2
