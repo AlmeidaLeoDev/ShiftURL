@@ -3,9 +3,13 @@ name: backend-ci
 
 # Eventos que disparam este workflow
 on:
+  pull_request:
+    branches:
+      - 'main'
   push:
     branches:
-      - 'feature/*' # Executa em push nas branches feature
+      - "feature/**"
+      - "main"
 
 jobs:
   build:
