@@ -1,0 +1,76 @@
+# Nome do workflow que aparece na interface do GitHub Actions
+name: backend-ci
+
+# Eventos que disparam este workflow
+on:
+  push:
+    branches:
+      - 'feature/*' # Executa em push nas branches feature
+
+jobs:
+  build:
+    # Sistema operacional usado pelo runner (máquina virtual)
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Baixa o código do repositório para o runner
+      # Sem isso, o workflow não tem acesso ao código-fonte
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # Step 2: Instala a versão do .NET necessária para compilar o projeto
+      # O runner não vem com SDK por padrão
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+      
+      # Step 3: Restaura pacotes e dependências definidas no csproj
+      # Sem restore, não é possível compilar o projeto
+      - name: Restore
+        run: dotnet restore Backend/Backend.csproj
+
+      # Step 4: Verificação de formatação do código
+      # Garante que o código segue as regras do projeto (.editorconfig) e falha se algo estiver fora do padrão
+      - name: Format Check
+        run: dotnet format Backend/Backend.csproj --verify-no-changes --verbosity diagnostic
+
+      # Step 5: Análise estática de código (lint)
+      # Compila o projeto tratando *todos* os warnings como erros
+      # Impede que código com problemas seja aprovado
+      - name: Code Analysis (Lint)
+        run: dotnet build Backend/Backend.csproj --configuration Release --no-restore /p:TreatWarningsAsErrors=true
+
+        
+      # Step 6: Executa os testes unitários
+      # Garante que alterações não quebraram nenhum comportamento existente
+      #- name: Run Tests
+      #  run: dotnet test Backend/Backend.csproj --configuration Release --no-build --verbosity normal
+
+      # Step 7: Configura o Docker Buildx
+      # Docker Buildx é uma ferramenta avançada do Docker que permite criar imagens de forma mais rápida, eficiente e para múltiplas plataformas (como amd64 e arm64) usando o BuildKit.
+      # Necessário para usar cache avançado e otimização de build
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 8: Realiza o build da imagem Docker
+      # Aqui o código já foi validado (format, lint, build, tests)
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .                                # Contexto do build (raiz do projeto)
+          file: ./Backend/Backend/Dockerfile        # Caminho do Dockerfile
+          push: false                               # CI não faz push — isso é responsabilidade do CD
+          tags: backend:${{ github.sha }}           # Tag única da imagem baseada no commit
+          cache-from: type=gha                      # Usa cache do GitHub (acelera builds)
+          cache-to: type=gha,mode=max               # Armazena cache para próximos builds
+          outputs: type=docker,dest=/tmp/image.tar  # Exporta a imagem como um arquivo .tar | É como gerar um arquivo .zip, só que é uma imagem Docker empacotada.
+
+      # Step 9: Salva a imagem Docker como artefato do workflow
+      # Permite baixar a imagem gerada, útil para debugging ou para usar no deploy
+      - name: Upload Docker Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-image-${{ github.sha }}  # Nome identificável baseado no commit
+          path: /tmp/image.tar                  # Arquivo exportado no step anterior
+          retention-days: 7                     # Mantém o artefato por 7 dias 
