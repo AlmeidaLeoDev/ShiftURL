@@ -43,7 +43,7 @@ jobs:
       # Compila o projeto tratando *todos* os warnings como erros
       # Impede que código com problemas seja aprovado
       - name: Code Analysis (Lint)
-        run: dotnet build Backend/Backend.csproj --configuration Release --no-restore /p:TreatWarningsAsErrors=true
+        run: dotnet build Backend/Backend/Backend.csproj --configuration Release --no-restore /p:TreatWarningsAsErrors=true
 
         
       # Step 6: Executa os testes unitários
