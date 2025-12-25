@@ -32,12 +32,12 @@ jobs:
       # Step 3: Restaura pacotes e dependências definidas no csproj
       # Sem restore, não é possível compilar o projeto
       - name: Restore
-        run: dotnet restore Backend/Backend.csproj
+        run: dotnet restore Backend/Backend/Backend.csproj
 
       # Step 4: Verificação de formatação do código
       # Garante que o código segue as regras do projeto (.editorconfig) e falha se algo estiver fora do padrão
       - name: Format Check
-        run: dotnet format Backend/Backend.csproj --verify-no-changes --verbosity diagnostic
+        run: dotnet format Backend/Backend/Backend.csproj --verify-no-changes --verbosity diagnostic
 
       # Step 5: Análise estática de código (lint)
       # Compila o projeto tratando *todos* os warnings como erros
